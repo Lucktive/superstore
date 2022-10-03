@@ -1,0 +1,177 @@
+---
+title: "superstore"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(DT)
+library(plotly)
+library(dplyr)
+
+```
+
+
+```{r }
+superstore <- read.csv("superstore_cl.csv")
+```
+
+Dashboard
+===================================================================
+
+Row
+-----------------------------------------------------------------------
+### Sales
+
+```{r}
+
+valueBox(sum(superstore$Sales),
+        icon = "fa-money" )
+```
+
+### Profit
+
+```{r}
+valueBox(sum(superstore$Profit),
+        icon = "fa-money" )
+```
+
+
+### Quantity
+
+```{r}
+valueBox(sum(superstore$Quantity),
+        icon = "fa-shopping-cart" )
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Profit By Category
+
+```{r}
+Category <- superstore %>%
+         group_by(Category) %>%
+         summarise(Total = sum(Profit)) %>%
+         plot_ly( x = ~Category,
+                  y  = ~Total,
+                type = "bar") %>%
+  layout(title = "Category Profit")
+         
+Category
+```
+### Sales By Region
+
+```{r}
+Region <- superstore %>%
+         group_by(Region) %>%
+         summarise(Total = sum(Sales)) %>%
+         plot_ly( x = ~Region,
+                  y  = ~Total,
+                type = "bar") %>%
+  layout(title = "Region Sales")
+         
+Region
+```
+
+### Profit By Segment
+
+```{r}
+Segment <- superstore %>%
+         group_by(Segment) %>%
+         summarise(Total = sum(Profit)) %>%
+         plot_ly( x = ~Segment,
+                  y  = ~Total,
+                type = "bar") %>%
+  layout(title = "Segment Profit")
+         
+Segment
+```
+### Sales By Ship_Mode
+
+```{r}
+Ship <- superstore %>%
+         group_by(Ship_Mode) %>%
+         summarise(Total = sum(Sales)) %>%
+         plot_ly( x = ~Ship_Mode,
+                  y  = ~Total,
+                type = "bar") %>%
+  layout(title = "Ship_Mode Sales")
+         
+Ship
+```
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Profit By Discout
+```{r}
+Discount <-  superstore  %>%
+         group_by(Discount) %>%
+         summarise(Total = sum(Profit)) %>%
+         arrange (Discount)%>%
+         plot_ly( x = ~Total,
+                  y  = ~Discount,
+                  type = "bar",
+                  orientation = "h") %>%
+  layout(title = "Discount Profit")
+Discount
+```
+### Sales and Profit Trend
+```{r}
+Trend <-  superstore  %>%
+         group_by(Year) %>%
+         summarise(Profit = sum(Profit), Sales = sum(Sales)) %>%
+         arrange(Year)
+
+fig <- plot_ly()
+# Add traces
+fig <- fig %>% add_trace(x = ~Trend$Year, y = ~Trend$Sales, name = "Sales", mode = "lines+markers", type = "scatter")
+
+ay <- list(
+  tickfont = list(color = "red"),
+  overlaying = "y",
+  side = "right",
+  title = "Profit")
+
+fig <- fig %>% add_trace(x = ~Trend$Year, y = ~Trend$Profit, name = "Profit", yaxis = "Profit", mode = "lines+markers", type = "scatter")
+# Set figure title, x and y-axes titles
+fig <- fig %>% layout(
+  title = "Sales and Profit Trend", yaxis2 = ay,
+  xaxis = list(title="Year "),
+  yaxis = list(title="Profit and Sales")
+)%>%
+  layout(
+          xaxis = list(
+            zerolinecolor = '#ffff',
+            zerolinewidth = 2,
+            gridcolor = 'ffff'),
+          yaxis = list(
+            zerolinecolor = '#ffff',
+            zerolinewidth = 2,
+            gridcolor = 'ffff')
+          )
+fig
+```
+### Sales and Profit By Sub_Category
+
+```{r}
+sub_category<-  superstore  %>%
+         group_by(Sub_Category) %>%
+         summarise(Sales = sum(Sales),Profit = sum(Profit)) %>%
+         arrange (desc(Sales))
+
+  fig  <- plot_ly( sub_category, x = ~Sales,
+                  y  = ~reorder(Sub_Category,Sales),
+                  type = "bar",
+                  orientation = "h",
+                  name = "")%>%
+  layout(title = "Sub_Category Sales and Profit")
+  fig <- fig %>% add_trace( x= ~sub_category$Profit)%>%
+    layout(xaxis = list(title = "Sales and Profit"),
+           yaxis = list(title = "Sub_Category"))
+  fig
+```
+
